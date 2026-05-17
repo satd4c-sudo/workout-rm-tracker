@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>筋トレログ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    background: #f5f5f7;
+    color: #1c1c1e;
+    min-height: 100vh;
+    padding: 20px 16px 120px;
+  }
+
+  h1 { text-align: center; font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; }
+
+  /* ===== カレンダー ===== */
+  .cal-card {
+    background: #fff;
+    border: 1px solid #e5e5ea;
+    border-radius: 14px;
+    padding: 14px 12px;
+    margin-bottom: 14px;
+  }
+
+  .cal-nav {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  }
+
+  .cal-nav button {
+    background: #f5f5f7; border: 1px solid #e5e5ea; border-radius: 7px;
+    color: #333; font-size: 1rem; width: 32px; height: 32px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+
+  .cal-nav button:hover { background: #eee; }
+  .cal-month { font-size: 0.95rem; font-weight: 700; }
+
+  .cal-dow {
+    display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px;
+  }
+
+  .cal-dow span {
+    text-align: center; font-size: 0.65rem; color: #aaa; padding: 3px 0; font-weight: 600;
+  }
+
+  .cal-dow span:last-child  { color: #f5a623; }
+  .cal-dow span:nth-child(6){ color: #5589dd; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+
+  .cal-cell {
+    position: relative; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 38px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; color: #1c1c1e; transition: background 0.12s; user-select: none;
+  }
+
+  .cal-cell:hover { background: #f5f5f7; }
+  .cal-cell.empty { cursor: default; pointer-events: none; }
+
+  .cal-cell.today .day-num {
+    background: #1c1c1e; color: #fff; border-radius: 50%;
+    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  }
+
+  .cal-cell.selected { background: #f5a623; color: #fff; border-radius: 8px; }
+  .cal-cell.selected .day-num { color: #fff; background: transparent; }
+  .cal-cell.today.selected .day-num { background: transparent; }
+
+  .cal-cell.sat .day-num { color: #5589dd; }
+  .cal-cell.sun .day-num { color: #f5a623; }
+  .cal-cell.selected .day-num { color: #fff !important; }
+  .cal-cell.today .day-num   { color: #fff !important; }
+
+  .cal-dot {
+    width: 4px; height: 4px; border-radius: 50%; background: #f5a623;
+    position: absolute; bottom: 4px;
+  }
+
+  .cal-cell.selected .cal-dot { background: #fff; }
+  .day-num { font-size: 0.82rem; font-weight: 600; line-height: 1; }
+
+  /* ===== ツールバー ===== */
+  .toolbar {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+
+  .date-badge {
+    background: #fff; border: 1px solid #e5e5ea; border-radius: 8px;
+    padding: 7px 12px; font-size: 0.82rem; font-weight: 700; color: #333; white-space: nowrap;
+  }
+
+  .ex-select {
+    flex: 1; min-width: 140px;
+    background: #fff; border: 1.5px solid #e5e5ea; border-radius: 8px;
+    color: #1c1c1e; font-size: 0.9rem; font-weight: 600;
+    padding: 7px 32px 7px 12px; outline: none; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23aaa' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    transition: border-color 0.15s;
+  }
+
+  .ex-select:focus { border-color: #f5a623; }
+
+  .goal-edit {
+    display: flex; align-items: center; gap: 5px;
+    background: #fff; border: 1px solid #e5e5ea; border-radius: 8px; padding: 6px 10px;
+  }
+
+  .goal-edit label { font-size: 0.66rem; color: #888; }
+
+  .goal-inp {
+    width: 54px; border: none; background: transparent;
+    color: #1c1c1e; font-size: 0.88rem; font-weight: 700;
+    text-align: right; outline: none; -moz-appearance: textfield;
+  }
+
+  .goal-inp::-webkit-inner-spin-button,
+  .goal-inp::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .goal-unit { font-size: 0.7rem; color: #888; }
+
+  /* ===== セット表 ===== */
+  .table-scroll { overflow-x: auto; }
+
+  /* ヘッダーは5列（SET, 重量, 回数, 1RM, 目標まで, 完了, 削除）*/
+  .col-head {
+    display: grid;
+    grid-template-columns: 44px 80px 64px 96px 108px 36px 26px;
+    gap: 6px;
+    padding: 0 10px 5px;
+    font-size: 0.61rem; text-transform: uppercase; letter-spacing: 0.5px; color: #555;
+    min-width: 474px;
+  }
+
+  /* セット行はカード */
+  .set-card {
+    background: #fff;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    padding: 8px 10px 6px;
+    margin-bottom: 7px;
+    min-width: 474px;
+  }
+
+  .set-card.done { opacity: 0.38; }
+
+  /* 上段グリッド */
+  .set-top {
+    display: grid;
+    grid-template-columns: 44px 80px 64px 96px 108px 36px 26px;
+    gap: 6px;
+    align-items: center;
+  }
+
+  /* 下段（メモ）*/
+  .set-bot {
+    margin-top: 6px;
+    padding-left: 50px;
+    padding-right: 32px;
+  }
+
+  .set-label { font-size: 0.66rem; font-weight: 700; color: #333; letter-spacing: 0.5px; }
+
+  .inp {
+    width: 100%; background: #f5f5f7; border: 1.5px solid #e5e5ea; border-radius: 7px;
+    color: #1c1c1e; font-size: 1.05rem; font-weight: 600;
+    text-align: center; padding: 7px 3px; outline: none;
+    transition: border-color 0.15s; -moz-appearance: textfield;
+  }
+
+  .inp::-webkit-inner-spin-button,
+  .inp::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .inp:focus { border-color: #f5a623; background: #fff; }
+  .inp::placeholder { color: #bbb; font-size: 0.8rem; font-weight: 400; }
+
+  .calc { font-size: 0.86rem; font-weight: 700; text-align: center; }
+  .c-empty { color: #bbb; font-weight: 400; font-size: 0.78rem; }
+  .c-1rm  { color: #d4880a; }
+  .c-far  { color: #444; }
+  .c-mid  { color: #d4880a; }
+  .c-near { color: #1a8c3a; }
+
+  .chk {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid #bbb;
+    background: transparent; cursor: pointer; font-size: 11px; font-weight: 700;
+    color: transparent; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto; transition: all 0.15s;
+  }
+
+  .chk:hover { border-color: #f5a623; }
+  .chk.on { background: #f5a623; border-color: #f5a623; color: #fff; }
+
+  .del {
+    background: none; border: none; color: #bbb; font-size: 1rem;
+    cursor: pointer; display: block; margin: 0 auto; transition: color 0.15s;
+  }
+
+  .del:hover { color: #ff3b30; }
+
+  .memo-inp {
+    width: 100%; background: #f5f5f7; border: 1.5px solid #e5e5ea; border-radius: 7px;
+    color: #444; font-size: 0.78rem; padding: 5px 10px; outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .memo-inp:focus { border-color: #f5a623; background: #fff; }
+  .memo-inp::placeholder { color: #ccc; }
+
+  .add-btn {
+    width: 100%; background: #fff; border: 1.5px dashed #ddd; border-radius: 10px;
+    color: #666; font-size: 0.83rem; padding: 10px; cursor: pointer; margin-top: 2px;
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+
+  .add-btn:hover { border-color: #f5a623; color: #f5a623; background: #fffaf3; }
+
+  /* ===== 日別サマリー ===== */
+  .day-summary {
+    background: #fff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .day-summary-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .day-summary-title { font-size: 0.72rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .day-summary-total { font-size: 0.85rem; font-weight: 700; color: #1c1c1e; }
+  .day-summary-total span { color: #d4880a; }
+
+  .day-ex-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .day-ex-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: #f5f5f7;
+    border-radius: 8px;
+  }
+
+  .day-ex-name { font-size: 0.8rem; font-weight: 700; color: #1c1c1e; min-width: 110px; }
+  .day-ex-sets { font-size: 0.72rem; color: #888; white-space: nowrap; }
+  .day-ex-detail { font-size: 0.72rem; color: #555; flex: 1; }
+  .day-ex-vol { font-size: 0.75rem; font-weight: 700; color: #d4880a; white-space: nowrap; }
+
+  /* ===== 統計 ===== */
+  .stats { display: flex; gap: 10px; margin-top: 12px; }
+
+  .stat-card {
+    background: #fff; border: 1px solid #e5e5ea; border-radius: 10px;
+    padding: 10px 14px; flex: 1; display: none;
+  }
+
+  .stat-label { font-size: 0.64rem; color: #555; margin-bottom: 4px; }
+  .stat-value { font-size: 1.35rem; font-weight: 700; color: #1c1c1e; }
+  .stat-unit  { font-size: 0.7rem; color: #888; margin-left: 2px; }
+  .prog-bar   { background: #f0f0f5; border-radius: 99px; height: 6px; overflow: hidden; margin-top: 6px; }
+  .prog-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#f5a623,#ff6b35); transition: width 0.4s; }
+
+  /* ===== 1RM電卓 ===== */
+  .calc-card {
+    background: #fff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 14px;
+  }
+
+  .calc-card-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+
+  .calc-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .calc-row:last-child { margin-bottom: 0; }
+
+  .calc-row-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #555;
+    white-space: nowrap;
+    padding: 0 4px;
+  }
+
+  .calc-formula {
+    font-size: 0.65rem;
+    color: #aaa;
+    margin-top: 1px;
+  }
+
+  .calc-inputs {
+    display: flex;
+    gap: 6px;
+  }
+
+  .calc-inp {
+    flex: 1;
+    background: #f5f5f7;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 7px;
+    color: #1c1c1e;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 7px 4px;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+    min-width: 0;
+  }
+
+  .calc-inp::-webkit-inner-spin-button,
+  .calc-inp::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .calc-inp:focus { border-color: #f5a623; background: #fff; }
+  .calc-inp::placeholder { color: #ccc; font-size: 0.8rem; font-weight: 400; }
+
+  .calc-result {
+    background: #fffaf3;
+    border: 1.5px solid #f5e0b0;
+    border-radius: 7px;
+    padding: 7px 12px;
+    text-align: center;
+    min-width: 80px;
+    white-space: nowrap;
+  }
+
+  .calc-result-val { font-size: 1.1rem; font-weight: 700; color: #d4880a; }
+  .calc-result-unit { font-size: 0.7rem; color: #aaa; margin-left: 2px; }
+  .calc-result-empty { font-size: 0.85rem; color: #ccc; }
+
+  .calc-divider {
+    border: none;
+    border-top: 1px solid #f0f0f5;
+    margin: 10px 0;
+  }
+
+  /* ===== タイマー ===== */
+  #timer {
+    position: fixed; bottom: 20px; right: 16px;
+    background: #fff; border: 1px solid #e5e5ea; border-radius: 20px;
+    padding: 14px 18px; width: 224px; z-index: 999; display: none;
+    box-shadow: 0 8px 28px rgba(0,0,0,.11); animation: up 0.22s ease;
+  }
+
+  @keyframes up { from { transform:translateY(10px); opacity:0 } to { transform:translateY(0); opacity:1 } }
+
+  .t-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .t-lbl  { font-size:0.63rem; color:#444; text-transform:uppercase; letter-spacing:1px; }
+  .t-x    { background:none; border:none; color:#888; cursor:pointer; font-size:0.95rem; }
+  .t-x:hover { color:#333; }
+
+  .t-num-row { display:flex; align-items:center; justify-content:center; gap:8px; margin:4px 0 8px; }
+
+  .t-adj {
+    background: #f5f5f7; border: 1.5px solid #e5e5ea; border-radius: 7px;
+    color: #555; font-size: 0.9rem; width: 28px; height: 32px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s; user-select: none;
+  }
+
+  .t-adj:hover { border-color: #f5a623; color: #f5a623; background: #fffaf3; }
+  .t-adj:active { transform: scale(0.9); }
+
+  .t-num {
+    font-size: 2.4rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: #1c1c1e; min-width: 86px; text-align: center; transition: color 0.3s;
+  }
+
+  .t-num.red { color: #ff3b30; }
+
+  .t-track { background: #f0f0f5; border-radius: 99px; height: 4px; overflow: hidden; margin-bottom: 10px; }
+  .t-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#f5a623,#ff6b35); transition: width 1s linear; }
+  .t-fill.red { background: #ff3b30; }
+
+  .t-presets { display:flex; gap:5px; justify-content:center; margin-bottom:10px; }
+  .t-pre {
+    background: #f5f5f7; border: 1.5px solid #e5e5ea; border-radius: 6px;
+    color: #666; font-size: 0.68rem; padding: 3px 8px; cursor: pointer; transition: all 0.12s;
+  }
+  .t-pre:hover, .t-pre.on { border-color: #f5a623; color: #f5a623; background: #fffaf3; }
+
+  .t-btns { display:flex; gap:7px; }
+  .t-btn  { flex:1; padding:6px; border-radius:7px; border:none; font-size:0.75rem; font-weight:600; cursor:pointer; }
+  .t-ghost { background: #f5f5f7; border: 1.5px solid #e5e5ea; color: #666; }
+  .t-ghost:hover { background: #eee; }
+  .t-main { background: linear-gradient(135deg,#f5a623,#ff6b35); color: #fff; }
+  .t-done { text-align:center; font-size:0.74rem; color:#1a8c3a; margin-top:8px; display:none; }
+</style>
+</head>
+<body>
+
+<h1>💪 筋トレログ</h1>
+
+<!-- カレンダー -->
+<div class="cal-card">
+  <div class="cal-nav">
+    <button onclick="prevMonth()">‹</button>
+    <span class="cal-month" id="calMonth"></span>
+    <button onclick="nextMonth()">›</button>
+  </div>
+  <div class="cal-dow">
+    <span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+</div>
+
+<!-- 日別サマリー -->
+<div class="day-summary" id="daySummary">
+  <div class="day-summary-head">
+    <span class="day-summary-title" id="summaryTitle"></span>
+    <span class="day-summary-total" id="summaryTotal"></span>
+  </div>
+  <div class="day-ex-list" id="summaryList"></div>
+</div>
+
+<!-- ツールバー -->
+<div class="toolbar">
+  <div class="date-badge" id="dateBadge"></div>
+  <select class="ex-select" id="exSelect" onchange="switchEx(this.value)"></select>
+  <div class="goal-edit">
+    <label>目標</label>
+    <input class="goal-inp" type="number" id="goalInp" min="1" max="1000" oninput="onGoalChange(this.value)">
+    <span class="goal-unit">kg</span>
+  </div>
+</div>
+
+<!-- セット表 -->
+<div class="table-scroll">
+  <div class="col-head">
+    <span>SET</span>
+    <span>重量 kg</span>
+    <span>回数</span>
+    <span>推定 1RM</span>
+    <span>目標まで</span>
+    <span style="text-align:center">完了</span>
+    <span></span>
+  </div>
+  <div id="setList"></div>
+</div>
+
+<button class="add-btn" onclick="addRow()">＋ セットを追加</button>
+
+<div class="stats">
+  <div class="stat-card" id="volCard">
+    <div class="stat-label">トレーニング総重量</div>
+    <div><span class="stat-value" id="volValue">0</span><span class="stat-unit">kg</span></div>
+  </div>
+  <div class="stat-card" id="rmCard">
+    <div class="stat-label">最高推定1RM</div>
+    <div><span class="stat-value" id="rmValue">0</span><span class="stat-unit">kg</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<!-- 1RM電卓 -->
+<div class="calc-card">
+  <div class="calc-card-title">1RM 換算電卓</div>
+
+  <!-- エプリー式（上半身） -->
+  <div class="calc-row">
+    <div>
+      <div class="calc-row-label">上半身</div>
+      <div class="calc-formula">Epley式：重量×(1+回数/30)</div>
+    </div>
+    <div class="calc-inputs">
+      <input class="calc-inp" id="epW" type="number" inputmode="decimal" placeholder="重量" oninput="onCalc()">
+      <input class="calc-inp" id="epR" type="number" inputmode="numeric" placeholder="回数" oninput="onCalc()">
+    </div>
+    <div class="calc-result" id="epResult">
+      <span class="calc-result-empty">—</span>
+    </div>
+  </div>
+
+  <hr class="calc-divider">
+
+  <!-- オコナー式（下半身） -->
+  <div class="calc-row">
+    <div>
+      <div class="calc-row-label">下半身</div>
+      <div class="calc-formula">O'Connor式：重量×(1+回数/40)</div>
+    </div>
+    <div class="calc-inputs">
+      <input class="calc-inp" id="ocW" type="number" inputmode="decimal" placeholder="重量" oninput="onCalc()">
+      <input class="calc-inp" id="ocR" type="number" inputmode="numeric" placeholder="回数" oninput="onCalc()">
+    </div>
+    <div class="calc-result" id="ocResult">
+      <span class="calc-result-empty">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- タイマー -->
+<div id="timer">
+  <div class="t-head">
+    <span class="t-lbl">休憩タイマー</span>
+    <button class="t-x" onclick="timerClose()">✕</button>
+  </div>
+  <div class="t-num-row">
+    <button class="t-adj" onclick="timerAdj(-1)">◀</button>
+    <div class="t-num" id="tNum">1:30</div>
+    <button class="t-adj" onclick="timerAdj(+1)">▶</button>
+  </div>
+  <div class="t-track"><div class="t-fill" id="tFill" style="width:100%"></div></div>
+  <div class="t-presets">
+    <button class="t-pre" onclick="timerPreset(60,this)">1分</button>
+    <button class="t-pre on" onclick="timerPreset(90,this)">1:30</button>
+    <button class="t-pre" onclick="timerPreset(120,this)">2分</button>
+    <button class="t-pre" onclick="timerPreset(180,this)">3分</button>
+  </div>
+  <div class="t-btns">
+    <button class="t-btn t-ghost" id="tPause" onclick="timerToggle()">一時停止</button>
+    <button class="t-btn t-main"  onclick="timerReset()">リセット</button>
+  </div>
+  <div class="t-done" id="tDone">✓ 休憩完了！次のセットへ</div>
+</div>
+
+<script>
+// ===== 種目定義 =====
+var EXERCISES = [
+  { id: 'bench',    name: 'ベンチプレス',     goal: 150, divisor: 30, showRM: true  },
+  { id: 'squat',    name: 'スクワット',       goal: 200, divisor: 40, showRM: true  },
+  { id: 'dead',     name: 'デッドリフト',     goal: 220, divisor: 40, showRM: true  },
+  { id: 'lat',      name: 'ラットプルダウン', goal: 100, divisor: 30, showRM: false },
+  { id: 'shoulder', name: 'ショルダープレス', goal: 100, divisor: 30, showRM: false },
+  { id: 'legpress', name: 'レッグプレス',     goal: 300, divisor: 40, showRM: false },
+  { id: 'row',      name: 'シーテッドロウ',   goal: 120, divisor: 30, showRM: false },
+  { id: 'abs',        name: 'アブドミナル',           goal:  80, divisor: 30, showRM: false },
+  { id: 'legpress45', name: '４５度レッグプレス',     goal: 300, divisor: 40, showRM: false },
+  { id: 'incbench',   name: 'インクラインベンチプレス', goal: 120, divisor: 30, showRM: false },
+  { id: 'dbcurl',     name: 'ダンベルカール',         goal:  30, divisor: 30, showRM: false },
+  { id: 'incdbcurl',  name: 'インクラインダンベルカール', goal: 25, divisor: 30, showRM: false },
+  { id: 'pullup',     name: '懸垂',                  goal:  50, divisor: 30, showRM: false },
+  { id: 'pecdeck',    name: 'ペックデッキフライ',     goal:  80, divisor: 30, showRM: false },
+  { id: 'preacher',   name: 'プリーチャーカール',     goal:  50, divisor: 30, showRM: false },
+  { id: 'reardelt',   name: 'リアデルトフライ',       goal:  30, divisor: 30, showRM: false },
+  { id: 'legext',     name: 'レッグエクステンション', goal: 100, divisor: 40, showRM: false },
+];
+
+// ===== 状態 =====
+var records     = {};
+var selectedDate = dateStr(new Date());
+var currentIdx  = 0;
+var calYear, calMonth;
+
+(function() {
+  var t = new Date();
+  calYear  = t.getFullYear();
+  calMonth = t.getMonth();
+  try { records = JSON.parse(localStorage.getItem('gym_v2') || '{}'); } catch(e) { records = {}; }
+})();
+
+function dateStr(d) {
+  return d.getFullYear() + '-' + p2(d.getMonth()+1) + '-' + p2(d.getDate());
+}
+
+function p2(n) { return n < 10 ? '0' + n : '' + n; }
+function curEx() { return EXERCISES[currentIdx]; }
+
+function getSets() {
+  var date = selectedDate, id = curEx().id;
+  if (!records[date])     records[date]     = {};
+  if (!records[date][id] || records[date][id].length === 0)
+    records[date][id] = [newRow()];
+  return records[date][id];
+}
+
+function newRow(w, r) {
+  return { weight: w || '', reps: r || '', memo: '', done: false };
+}
+
+function save() {
+  try { localStorage.setItem('gym_v2', JSON.stringify(records)); } catch(e) {}
+}
+
+// ===== 1RM =====
+function calcORM(w, r, div) {
+  w = parseFloat(w); r = parseInt(r);
+  if (!w || !r || w <= 0 || r <= 0 || isNaN(w) || isNaN(r)) return null;
+  return r === 1 ? w : Math.round(w * (1 + r / div) * 10) / 10;
+}
+
+// ===== 1行の計算セルだけ更新（入力中に全再描画しない）=====
+function updateRow(idx) {
+  var sets = getSets();
+  var s    = sets[idx];
+  if (!s) return;
+
+  var rmEl   = document.getElementById('rm'   + idx);
+  var diffEl = document.getElementById('diff' + idx);
+  if (!rmEl || !diffEl) return;
+
+  if (!curEx().showRM) {
+    rmEl.innerHTML   = '<span class="c-empty">—</span>';
+    diffEl.innerHTML = '<span class="c-empty">—</span>';
+    updateStats();
+    return;
+  }
+
+  var v = calcORM(s.weight, s.reps, curEx().divisor);
+  if (v === null) {
+    rmEl.innerHTML   = '<span class="c-empty">—</span>';
+    diffEl.innerHTML = '<span class="c-empty">—</span>';
+  } else {
+    var gap = Math.round((curEx().goal - v) * 10) / 10;
+    rmEl.innerHTML = '<span class="c-1rm">' + v + ' kg</span>';
+    if (gap <= 0) {
+      diffEl.innerHTML = '<span class="c-near">達成！🎉</span>';
+    } else {
+      var cls = gap <= 20 ? 'c-near' : gap <= 50 ? 'c-mid' : 'c-far';
+      diffEl.innerHTML = '<span class="' + cls + '">あと ' + gap + ' kg</span>';
+    }
+  }
+  updateStats();
+}
+
+// ===== 統計 =====
+function updateStats() {
+  var sets = getSets(), goal = curEx().goal;
+  var total = 0;
+  var orms  = [];
+
+  sets.forEach(function(s) {
+    var w = parseFloat(s.weight), r = parseInt(s.reps);
+    if (w > 0 && r > 0 && !isNaN(w) && !isNaN(r)) total += w * r;
+    var v = calcORM(s.weight, s.reps, curEx().divisor);
+    if (v !== null) orms.push(v);
+  });
+
+  var best = orms.length ? Math.max.apply(null, orms) : null;
+
+  var vc = document.getElementById('volCard');
+  var rc = document.getElementById('rmCard');
+
+  vc.style.display = total > 0 ? 'block' : 'none';
+  if (total > 0) document.getElementById('volValue').textContent = total.toLocaleString();
+
+  rc.style.display = best !== null ? 'block' : 'none';
+  if (best !== null) {
+    document.getElementById('rmValue').textContent = best;
+    document.getElementById('progFill').style.width = Math.min(Math.round(best / goal * 1000) / 10, 100) + '%';
+  }
+}
+
+// ===== セット全体描画 =====
+function renderSets() {
+  var sets = getSets();
+
+  document.getElementById('setList').innerHTML = sets.map(function(s, i) {
+    var wVal = s.weight !== '' ? s.weight : '';
+    var rVal = s.reps   !== '' ? s.reps   : '';
+    var mVal = (s.memo  || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+
+    return '<div class="set-card' + (s.done ? ' done' : '') + '" id="card' + i + '">'
+
+      // 上段
+      + '<div class="set-top">'
+      + '<span class="set-label">SET ' + (i + 1) + '</span>'
+
+      + '<input class="inp" id="w' + i + '" type="number" inputmode="decimal"'
+      + ' placeholder="100" min="1" max="999" step="2.5" value="' + wVal + '"'
+      + ' oninput="onWeight(' + i + ',this.value)">'
+
+      + '<input class="inp" id="r' + i + '" type="number" inputmode="numeric"'
+      + ' placeholder="5" min="1" max="100" value="' + rVal + '"'
+      + ' oninput="onReps(' + i + ',this.value)">'
+
+      + '<div class="calc" id="rm'   + i + '"><span class="c-empty">—</span></div>'
+      + '<div class="calc" id="diff' + i + '"><span class="c-empty">—</span></div>'
+
+      + '<button class="chk' + (s.done ? ' on' : '') + '" onclick="onCheck(' + i + ')">'
+      + (s.done ? '✓' : '') + '</button>'
+
+      + '<button class="del" onclick="onDel(' + i + ')">×</button>'
+      + '</div>'
+
+      // 下段（メモ）
+      + '<div class="set-bot">'
+      + '<input class="memo-inp" id="m' + i + '" type="text" placeholder="メモ（任意）"'
+      + ' value="' + mVal + '"'
+      + ' oninput="onMemo(' + i + ',this.value)">'
+      + '</div>'
+
+      + '</div>';
+  }).join('');
+
+  // 既存値の計算セルを更新
+  sets.forEach(function(_, i) { updateRow(i); });
+}
+
+// 全角数字 → 半角数字
+function toHalf(str) {
+  return String(str).replace(/[０-９]/g, function(c) {
+    return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+  });
+}
+
+// ===== インプットハンドラ（インライン記述を最小に）=====
+function onWeight(i, v) {
+  var h = toHalf(v);
+  var el = document.getElementById('w' + i);
+  if (el && h !== v) { el.value = h; }
+  getSets()[i].weight = h;
+  save();
+  updateRow(i);
+  renderDaySummary();
+}
+
+function onReps(i, v) {
+  var h = toHalf(v);
+  var el = document.getElementById('r' + i);
+  if (el && h !== v) { el.value = h; }
+  getSets()[i].reps = h;
+  save();
+  updateRow(i);
+  renderDaySummary();
+}
+
+function onMemo(i, v) {
+  getSets()[i].memo = v;
+  save();
+}
+
+function onCheck(i) {
+  var sets = getSets();
+  sets[i].done = !sets[i].done;
+  save();
+  renderSets();
+  renderDaySummary();
+  if (sets[i].done) timerStart();
+}
+
+function onDel(i) {
+  var sets = getSets();
+  if (sets.length === 1) { sets[0] = newRow(); }
+  else { sets.splice(i, 1); }
+  save();
+  renderSets();
+  renderCalendar();
+  renderDaySummary();
+}
+
+function addRow() {
+  var sets = getSets();
+  var prev = sets[sets.length - 1];
+  sets.push(newRow(prev.weight, prev.reps));
+  save();
+  renderSets();
+  renderCalendar();
+  renderDaySummary();
+  var inputs = document.querySelectorAll('.inp');
+  if (inputs.length >= 2) inputs[inputs.length - 2].focus();
+}
+
+// ===== ツールバー =====
+function renderToolbar() {
+  var d    = new Date(selectedDate + 'T00:00:00');
+  var days = ['日','月','火','水','木','金','土'];
+  document.getElementById('dateBadge').textContent =
+    (d.getMonth()+1) + '月' + d.getDate() + '日（' + days[d.getDay()] + '）';
+  document.getElementById('goalInp').value = curEx().goal;
+}
+
+function renderExSelect() {
+  var sel = document.getElementById('exSelect');
+  sel.innerHTML = EXERCISES.map(function(ex, i) {
+    return '<option value="' + i + '">' + ex.name + '</option>';
+  }).join('');
+  sel.value = currentIdx;
+}
+
+function switchEx(i) {
+  currentIdx = parseInt(i);
+  renderToolbar();
+  renderSets();
+}
+
+function onGoalChange(v) {
+  var n = parseInt(v);
+  if (n > 0) {
+    curEx().goal = n;
+    getSets().forEach(function(_, i) { updateRow(i); });
+  }
+}
+
+// ===== カレンダー =====
+function renderCalendar() {
+  document.getElementById('calMonth').textContent = calYear + '年' + (calMonth + 1) + '月';
+
+  var firstDay    = new Date(calYear, calMonth, 1).getDay();
+  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  var offset      = firstDay === 0 ? 6 : firstDay - 1;
+  var todayS      = dateStr(new Date());
+  var html        = '';
+
+  for (var j = 0; j < offset; j++) html += '<div class="cal-cell empty"></div>';
+
+  for (var d = 1; d <= daysInMonth; d++) {
+    var ds  = calYear + '-' + p2(calMonth + 1) + '-' + p2(d);
+    var dow = new Date(calYear, calMonth, d).getDay();
+    var cls = 'cal-cell';
+    if (dow === 6) cls += ' sat';
+    if (dow === 0) cls += ' sun';
+    if (ds === todayS)      cls += ' today';
+    if (ds === selectedDate) cls += ' selected';
+    var dot = hasRecord(ds) ? '<div class="cal-dot"></div>' : '';
+    html += '<div class="' + cls + '" onclick="selectDate(\'' + ds + '\')">'
+          + '<span class="day-num">' + d + '</span>' + dot + '</div>';
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function hasRecord(ds) {
+  if (!records[ds]) return false;
+  var exIds = Object.keys(records[ds]);
+  for (var k = 0; k < exIds.length; k++) {
+    var sets = records[ds][exIds[k]];
+    for (var m = 0; m < sets.length; m++) {
+      if (sets[m].weight && sets[m].reps) return true;
+    }
+  }
+  return false;
+}
+
+function renderDaySummary() {
+  var wrap = document.getElementById('daySummary');
+  var dateRec = records[selectedDate] || {};
+  var exIds   = Object.keys(dateRec);
+
+  // 有効なセット（重量・回数両方ある）がある種目だけ抽出
+  var rows = [];
+  var dayTotal = 0;
+
+  EXERCISES.forEach(function(ex) {
+    var sets = dateRec[ex.id];
+    if (!sets) return;
+    var valid = sets.filter(function(s) {
+      return parseFloat(s.weight) > 0 && parseInt(s.reps) > 0;
+    });
+    if (!valid.length) return;
+
+    var vol = valid.reduce(function(sum, s) {
+      return sum + parseFloat(s.weight) * parseInt(s.reps);
+    }, 0);
+    dayTotal += vol;
+
+    var detail = valid.map(function(s) {
+      return s.weight + 'kg×' + s.reps;
+    }).join(' / ');
+
+    rows.push({ name: ex.name, sets: valid.length, detail: detail, vol: vol });
+  });
+
+  if (!rows.length) { wrap.style.display = 'none'; return; }
+
+  var d    = new Date(selectedDate + 'T00:00:00');
+  var days = ['日','月','火','水','木','金','土'];
+  document.getElementById('summaryTitle').textContent =
+    (d.getMonth()+1) + '月' + d.getDate() + '日（' + days[d.getDay()] + '）のトレーニング';
+  document.getElementById('summaryTotal').innerHTML =
+    '合計総重量 <span>' + dayTotal.toLocaleString() + ' kg</span>';
+
+  document.getElementById('summaryList').innerHTML = rows.map(function(r) {
+    return '<div class="day-ex-row">'
+      + '<span class="day-ex-name">' + r.name + '</span>'
+      + '<span class="day-ex-sets">' + r.sets + 'セット</span>'
+      + '<span class="day-ex-detail">' + r.detail + '</span>'
+      + '<span class="day-ex-vol">' + r.vol.toLocaleString() + ' kg</span>'
+      + '</div>';
+  }).join('');
+
+  wrap.style.display = 'block';
+}
+
+function selectDate(ds) {
+  selectedDate = ds;
+  renderCalendar();
+  renderToolbar();
+  renderDaySummary();
+  renderSets();
+}
+
+function prevMonth() {
+  calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function nextMonth() {
+  calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+// ===== タイマー =====
+var tTotal = 90, tLeft = 90, tRun = false, tIv = null;
+
+function timerStart() {
+  document.getElementById('timer').style.display = 'block';
+  tLeft = tTotal; tRun = true;
+  clearInterval(tIv);
+  document.getElementById('tDone').style.display = 'none';
+  document.getElementById('tPause').textContent = '一時停止';
+  drawTimer();
+  tIv = setInterval(tick, 1000);
+}
+
+function tick() {
+  if (!tRun) return;
+  tLeft--; drawTimer();
+  if (tLeft <= 0) {
+    clearInterval(tIv); tRun = false;
+    document.getElementById('tDone').style.display = 'block';
+    beep();
+  }
+}
+
+function drawTimer() {
+  var m = Math.floor(tLeft/60), s = tLeft%60, u = tLeft <= 10;
+  document.getElementById('tNum').className = 't-num' + (u ? ' red' : '');
+  document.getElementById('tNum').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  var f = document.getElementById('tFill');
+  f.style.width = (tLeft / tTotal * 100) + '%';
+  f.className   = 't-fill' + (u ? ' red' : '');
+}
+
+function timerAdj(d) {
+  tLeft = Math.max(1, tLeft + d); tTotal = tLeft;
+  document.querySelectorAll('.t-pre').forEach(function(b) { b.classList.remove('on'); });
+  drawTimer();
+}
+
+function timerToggle() {
+  tRun = !tRun;
+  document.getElementById('tPause').textContent = tRun ? '一時停止' : '再開';
+  if (tRun) tIv = setInterval(tick, 1000); else clearInterval(tIv);
+}
+
+function timerReset() {
+  clearInterval(tIv); tLeft = tTotal; tRun = true;
+  document.getElementById('tDone').style.display = 'none';
+  document.getElementById('tPause').textContent = '一時停止';
+  drawTimer(); tIv = setInterval(tick, 1000);
+}
+
+function timerClose() {
+  clearInterval(tIv); tRun = false;
+  document.getElementById('timer').style.display = 'none';
+}
+
+function timerPreset(sec, btn) {
+  tTotal = sec; tLeft = sec;
+  document.querySelectorAll('.t-pre').forEach(function(b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  clearInterval(tIv); tRun = true;
+  document.getElementById('tDone').style.display = 'none';
+  document.getElementById('tPause').textContent = '一時停止';
+  drawTimer(); tIv = setInterval(tick, 1000);
+}
+
+function beep() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.2, 0.4].forEach(function(t) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.3, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.2);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.25);
+    });
+  } catch(e) {}
+}
+
+// ===== 1RM電卓 =====
+function onCalc() {
+  function calc(wId, rId, resultId, div) {
+    var w = parseFloat(toHalf(document.getElementById(wId).value));
+    var r = parseInt(toHalf(document.getElementById(rId).value));
+    var el = document.getElementById(resultId);
+    if (w > 0 && r > 0 && !isNaN(w) && !isNaN(r)) {
+      var v = r === 1 ? w : Math.round(w * (1 + r / div) * 10) / 10;
+      el.innerHTML = '<span class="calc-result-val">' + v + '</span><span class="calc-result-unit">kg</span>';
+    } else {
+      el.innerHTML = '<span class="calc-result-empty">—</span>';
+    }
+  }
+  calc('epW', 'epR', 'epResult', 30);
+  calc('ocW', 'ocR', 'ocResult', 40);
+}
+
+// ===== Enter で次の入力欄へ =====
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  var target = e.target;
+  if (!target.matches('.inp, .memo-inp, .calc-inp')) return;
+  e.preventDefault();
+  var all = Array.from(document.querySelectorAll('.inp, .memo-inp'));
+  var idx = all.indexOf(target);
+  if (idx >= 0 && idx < all.length - 1) {
+    all[idx + 1].focus();
+  }
+});
+
+// ===== 起動 =====
+renderExSelect();
+renderCalendar();
+renderToolbar();
+renderDaySummary();
+renderSets();
+</script>
+</body>
+</html>
