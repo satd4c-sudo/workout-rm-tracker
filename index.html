@@ -358,10 +358,49 @@
     background: #1c1c1e; border-top: 1px solid #2c2c2e;
     border-radius: 24px 24px 0 0;
     padding: 16px 24px 36px; z-index: 999; display: none;
-    box-shadow: 0 -8px 32px rgba(0,0,0,.7); animation: up 0.26s ease;
+    box-shadow: 0 -8px 32px rgba(0,0,0,.7);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1), border-radius 0.28s;
   }
 
+  #timer.first-show { animation: up 0.26s ease; }
   @keyframes up { from { transform:translateY(100%); opacity:0 } to { transform:translateY(0); opacity:1 } }
+
+  /* 縮小時 */
+  #timer.mini {
+    bottom: 20px; left: 16px; right: auto;
+    border-radius: 50px; border-top: none;
+    padding: 0; width: auto;
+    box-shadow: 0 4px 18px rgba(0,0,0,.7);
+    cursor: pointer;
+  }
+
+  #timer.mini .t-mini-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+  }
+
+  #timer.mini .t-mini-icon { font-size: 1rem; }
+  #timer.mini .t-mini-num {
+    font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: #fff; min-width: 48px;
+  }
+  #timer.mini .t-mini-num.red { color: #ff453a; }
+  #timer.mini .t-mini-close {
+    background: rgba(255,255,255,0.12); border: none; border-radius: 50%;
+    color: #fff; font-size: 0.75rem; width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+
+  /* 縮小時は本体を非表示 */
+  #timer.mini .t-head,
+  #timer.mini .t-num-row,
+  #timer.mini .t-track,
+  #timer.mini .t-presets,
+  #timer.mini .t-btns,
+  #timer.mini .t-done { display: none !important; }
+
+  /* 通常時はピルを非表示 */
+  #timer:not(.mini) .t-mini-pill { display: none; }
 
   .t-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
   .t-lbl  { font-size:0.72rem; color:#fff; text-transform:uppercase; letter-spacing:1.2px; font-weight:700; }
@@ -627,9 +666,19 @@
 
 <!-- タイマー -->
 <div id="timer">
+  <!-- 縮小表示ピル（タップで展開） -->
+  <div class="t-mini-pill" onclick="timerExpand()">
+    <span class="t-mini-icon">⏱</span>
+    <span class="t-mini-num" id="tNumMini">1:30</span>
+    <button class="t-mini-close" onclick="event.stopPropagation(); timerClose()">✕</button>
+  </div>
+  <!-- 通常表示 -->
   <div class="t-head">
     <span class="t-lbl">休憩タイマー</span>
-    <button class="t-x" onclick="timerClose()">✕</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="t-x" onclick="timerMinimize()" title="縮小">⌄</button>
+      <button class="t-x" onclick="timerClose()">✕</button>
+    </div>
   </div>
   <div class="t-num-row">
     <button class="t-adj" onclick="timerAdj(-1)">◀</button>
@@ -995,11 +1044,23 @@ document.addEventListener('keydown', function(e) {
 var tTotal=90, tLeft=90, tRun=false, tIv=null;
 
 function timerStart() {
-  document.getElementById('timer').style.display='block';
+  var el = document.getElementById('timer');
+  el.style.display='block';
+  el.classList.remove('mini');
+  el.classList.add('first-show');
+  setTimeout(function(){ el.classList.remove('first-show'); }, 300);
   tLeft=tTotal; tRun=true; clearInterval(tIv);
   document.getElementById('tDone').style.display='none';
   document.getElementById('tPause').textContent='一時停止';
   drawTimer(); tIv=setInterval(tick,1000);
+}
+
+function timerMinimize() {
+  document.getElementById('timer').classList.add('mini');
+}
+
+function timerExpand() {
+  document.getElementById('timer').classList.remove('mini');
 }
 
 function tick() {
@@ -1009,8 +1070,11 @@ function tick() {
 
 function drawTimer() {
   var m=Math.floor(tLeft/60), s=tLeft%60, u=tLeft<=10;
+  var txt=m+':'+(s<10?'0':'')+s;
   document.getElementById('tNum').className='t-num'+(u?' red':'');
-  document.getElementById('tNum').textContent=m+':'+(s<10?'0':'')+s;
+  document.getElementById('tNum').textContent=txt;
+  document.getElementById('tNumMini').className='t-mini-num'+(u?' red':'');
+  document.getElementById('tNumMini').textContent=txt;
   var f=document.getElementById('tFill');
   f.style.width=(tLeft/tTotal*100)+'%';
   f.className='t-fill'+(u?' red':'');
