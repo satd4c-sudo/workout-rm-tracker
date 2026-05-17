@@ -156,7 +156,7 @@
 
   /* カレンダー画面の日別サマリー */
   .cal-hint {
-    text-align: center; color: #bbb; font-size: 0.82rem; padding: 20px 0;
+    text-align: center; color: #bbb; font-size: 0.75rem; padding: 6px 0 14px;
   }
 
   .day-summary {
@@ -183,6 +183,17 @@
   .day-ex-sets { font-size: 0.7rem; color: #888; white-space: nowrap; }
   .day-ex-detail { font-size: 0.7rem; color: #555; flex: 1; }
   .day-ex-vol { font-size: 0.72rem; font-weight: 700; color: #d4880a; white-space: nowrap; }
+
+  .day-no-record { font-size: 0.8rem; color: #bbb; text-align: center; padding: 10px 0; }
+
+  .go-log-btn {
+    width: 100%; margin-top: 10px; padding: 10px;
+    background: #f5a623; border: none; border-radius: 9px;
+    color: #fff; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;
+    transition: opacity 0.15s;
+  }
+  .go-log-btn:active { opacity: 0.8; }
 
   /* ===== ログ画面 ===== */
   .log-body { padding: 14px 16px 120px; }
@@ -435,14 +446,15 @@
     </div>
 
     <!-- 選択日のサマリー -->
+    <div class="cal-hint" id="calHint">日付をタップ → もう一度タップで記録画面へ</div>
     <div class="day-summary" id="daySummary">
       <div class="day-summary-head">
         <span class="day-summary-title" id="summaryTitle"></span>
         <span class="day-summary-total" id="summaryTotal"></span>
       </div>
       <div class="day-ex-list" id="summaryList"></div>
+      <button class="go-log-btn" id="goLogBtn" onclick="goToLog(selectedDate)">記録する・編集する ›</button>
     </div>
-    <div class="cal-hint" id="calHint">日付を選ぶとトレーニングを記録できます</div>
   </div>
 </div>
 
@@ -652,8 +664,15 @@ function hasRecord(ds) {
 }
 
 function selectDate(ds) {
-  selectedDate = ds;
-  goToLog(ds);
+  if (ds === selectedDate) {
+    // 同じ日を2回タップ → ログ画面へ遷移
+    goToLog(ds);
+  } else {
+    // 別の日を1回タップ → 選択してサマリー表示
+    selectedDate = ds;
+    renderCalendar();
+    renderDaySummary();
+  }
 }
 
 function prevMonth() {
@@ -684,20 +703,24 @@ function renderDaySummary() {
     rows.push({ name: ex.name, sets: valid.length, detail: detail, vol: vol });
   });
 
-  if (!rows.length) { wrap.style.display = 'none'; hint.style.display = 'block'; return; }
-
-  hint.style.display = 'none';
-  document.getElementById('summaryTitle').textContent = dayLabel(selectedDate) + ' のトレーニング';
-  document.getElementById('summaryTotal').innerHTML = '合計 <span>' + dayTotal.toLocaleString() + ' kg</span>';
-  document.getElementById('summaryList').innerHTML = rows.map(function(r) {
-    return '<div class="day-ex-row">'
-      + '<span class="day-ex-name">' + r.name + '</span>'
-      + '<span class="day-ex-sets">' + r.sets + 'セット</span>'
-      + '<span class="day-ex-detail">' + r.detail + '</span>'
-      + '<span class="day-ex-vol">' + r.vol.toLocaleString() + 'kg</span>'
-      + '</div>';
-  }).join('');
+  hint.style.display = 'block';
   wrap.style.display = 'block';
+  document.getElementById('summaryTitle').textContent = dayLabel(selectedDate);
+
+  if (!rows.length) {
+    document.getElementById('summaryTotal').textContent = '';
+    document.getElementById('summaryList').innerHTML = '<div class="day-no-record">まだ記録がありません</div>';
+  } else {
+    document.getElementById('summaryTotal').innerHTML = '合計 <span>' + dayTotal.toLocaleString() + ' kg</span>';
+    document.getElementById('summaryList').innerHTML = rows.map(function(r) {
+      return '<div class="day-ex-row">'
+        + '<span class="day-ex-name">' + r.name + '</span>'
+        + '<span class="day-ex-sets">' + r.sets + 'セット</span>'
+        + '<span class="day-ex-detail">' + r.detail + '</span>'
+        + '<span class="day-ex-vol">' + r.vol.toLocaleString() + 'kg</span>'
+        + '</div>';
+    }).join('');
+  }
 }
 
 // ===== ログ画面ヘッダー =====
