@@ -124,87 +124,89 @@
   .goal-inp::-webkit-outer-spin-button { -webkit-appearance: none; }
   .goal-unit { font-size: 0.7rem; color: #888; }
 
-  /* ===== セット表 ===== */
-  .table-scroll { overflow-x: auto; }
-
-  /* ヘッダーは5列（SET, 重量, 回数, 1RM, 目標まで, 完了, 削除）*/
-  .col-head {
-    display: grid;
-    grid-template-columns: 44px 80px 64px 96px 108px 36px 26px;
-    gap: 6px;
-    padding: 0 10px 5px;
-    font-size: 0.61rem; text-transform: uppercase; letter-spacing: 0.5px; color: #555;
-    min-width: 474px;
-  }
-
-  /* セット行はカード */
+  /* ===== セットカード（モバイルファースト）===== */
   .set-card {
     background: #fff;
     border: 1px solid #e5e5ea;
-    border-radius: 10px;
-    padding: 8px 10px 6px;
-    margin-bottom: 7px;
-    min-width: 474px;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
   }
 
   .set-card.done { opacity: 0.38; }
 
-  /* 上段グリッド */
-  .set-top {
+  /* 1段目: SET番号 | 重量 | 回数 | ✓ | × */
+  .set-line1 {
     display: grid;
-    grid-template-columns: 44px 80px 64px 96px 108px 36px 26px;
-    gap: 6px;
+    grid-template-columns: 38px 1fr 1fr 36px 28px;
+    gap: 7px;
     align-items: center;
+    margin-bottom: 8px;
   }
 
-  /* 下段（メモ）*/
-  .set-bot {
-    margin-top: 6px;
-    padding-left: 50px;
-    padding-right: 32px;
+  /* 2段目: 1RM結果 | 目標まで結果 */
+  .set-line2 {
+    display: flex;
+    gap: 10px;
+    padding-left: 45px;
+    margin-bottom: 7px;
+    flex-wrap: wrap;
   }
 
-  .set-label { font-size: 0.66rem; font-weight: 700; color: #333; letter-spacing: 0.5px; }
+  /* 3段目: メモ */
+  .set-line3 { padding-left: 45px; }
+
+  .set-label {
+    font-size: 0.65rem; font-weight: 700; color: #555; letter-spacing: 0.5px;
+  }
 
   .inp {
-    width: 100%; background: #f5f5f7; border: 1.5px solid #e5e5ea; border-radius: 7px;
-    color: #1c1c1e; font-size: 1.05rem; font-weight: 600;
-    text-align: center; padding: 7px 3px; outline: none;
+    width: 100%; background: #f5f5f7; border: 1.5px solid #e5e5ea; border-radius: 8px;
+    color: #1c1c1e; font-size: 1.1rem; font-weight: 600;
+    text-align: center; padding: 9px 4px; outline: none;
     transition: border-color 0.15s; -moz-appearance: textfield;
   }
 
   .inp::-webkit-inner-spin-button,
   .inp::-webkit-outer-spin-button { -webkit-appearance: none; }
   .inp:focus { border-color: #f5a623; background: #fff; }
-  .inp::placeholder { color: #bbb; font-size: 0.8rem; font-weight: 400; }
+  .inp::placeholder { color: #ccc; font-size: 0.82rem; font-weight: 400; }
 
-  .calc { font-size: 0.86rem; font-weight: 700; text-align: center; }
-  .c-empty { color: #bbb; font-weight: 400; font-size: 0.78rem; }
-  .c-1rm  { color: #d4880a; }
-  .c-far  { color: #444; }
-  .c-mid  { color: #d4880a; }
-  .c-near { color: #1a8c3a; }
+  /* 結果バッジ */
+  .res-badge {
+    display: flex; align-items: center; gap: 4px;
+    background: #f5f5f7; border-radius: 6px;
+    padding: 4px 9px; font-size: 0.78rem;
+  }
+
+  .res-badge-label { color: #999; font-size: 0.7rem; }
+  .c-empty { color: #ccc; }
+  .c-1rm   { color: #d4880a; font-weight: 700; }
+  .c-far   { color: #444;    font-weight: 700; }
+  .c-mid   { color: #d4880a; font-weight: 700; }
+  .c-near  { color: #1a8c3a; font-weight: 700; }
 
   .chk {
-    width: 28px; height: 28px; border-radius: 50%; border: 2px solid #bbb;
-    background: transparent; cursor: pointer; font-size: 11px; font-weight: 700;
+    width: 36px; height: 36px; border-radius: 50%; border: 2px solid #ddd;
+    background: transparent; cursor: pointer; font-size: 14px; font-weight: 700;
     color: transparent; display: flex; align-items: center; justify-content: center;
-    margin: 0 auto; transition: all 0.15s;
+    transition: all 0.15s;
   }
 
   .chk:hover { border-color: #f5a623; }
   .chk.on { background: #f5a623; border-color: #f5a623; color: #fff; }
 
   .del {
-    background: none; border: none; color: #bbb; font-size: 1rem;
-    cursor: pointer; display: block; margin: 0 auto; transition: color 0.15s;
+    background: none; border: none; color: #ccc; font-size: 1.1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 36px; transition: color 0.15s;
   }
 
   .del:hover { color: #ff3b30; }
 
   .memo-inp {
     width: 100%; background: #f5f5f7; border: 1.5px solid #e5e5ea; border-radius: 7px;
-    color: #444; font-size: 0.78rem; padding: 5px 10px; outline: none;
+    color: #444; font-size: 0.82rem; padding: 6px 10px; outline: none;
     transition: border-color 0.15s;
   }
 
@@ -448,19 +450,8 @@
   </div>
 </div>
 
-<!-- セット表 -->
-<div class="table-scroll">
-  <div class="col-head">
-    <span>SET</span>
-    <span>重量 kg</span>
-    <span>回数</span>
-    <span>推定 1RM</span>
-    <span>目標まで</span>
-    <span style="text-align:center">完了</span>
-    <span></span>
-  </div>
-  <div id="setList"></div>
-</div>
+<!-- セットリスト -->
+<div id="setList"></div>
 
 <button class="add-btn" onclick="addRow()">＋ セットを追加</button>
 
@@ -614,8 +605,8 @@ function updateRow(idx) {
   if (!rmEl || !diffEl) return;
 
   if (!curEx().showRM) {
-    rmEl.innerHTML   = '<span class="c-empty">—</span>';
-    diffEl.innerHTML = '<span class="c-empty">—</span>';
+    rmEl.innerHTML   = '';
+    diffEl.innerHTML = '';
     updateStats();
     return;
   }
@@ -673,23 +664,21 @@ function renderSets() {
     var wVal = s.weight !== '' ? s.weight : '';
     var rVal = s.reps   !== '' ? s.reps   : '';
     var mVal = (s.memo  || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    var showRM = curEx().showRM;
 
-    return '<div class="set-card' + (s.done ? ' done' : '') + '" id="card' + i + '">'
+    return '<div class="set-card' + (s.done ? ' done' : '') + '">'
 
-      // 上段
-      + '<div class="set-top">'
-      + '<span class="set-label">SET ' + (i + 1) + '</span>'
+      // 1段目: SET | 重量 | 回数 | ✓ | ×
+      + '<div class="set-line1">'
+      + '<span class="set-label">SET<br>' + (i + 1) + '</span>'
 
       + '<input class="inp" id="w' + i + '" type="number" inputmode="decimal"'
-      + ' placeholder="100" min="1" max="999" step="2.5" value="' + wVal + '"'
+      + ' placeholder="重量" min="1" max="999" step="2.5" value="' + wVal + '"'
       + ' oninput="onWeight(' + i + ',this.value)">'
 
       + '<input class="inp" id="r' + i + '" type="number" inputmode="numeric"'
-      + ' placeholder="5" min="1" max="100" value="' + rVal + '"'
+      + ' placeholder="回数" min="1" max="100" value="' + rVal + '"'
       + ' oninput="onReps(' + i + ',this.value)">'
-
-      + '<div class="calc" id="rm'   + i + '"><span class="c-empty">—</span></div>'
-      + '<div class="calc" id="diff' + i + '"><span class="c-empty">—</span></div>'
 
       + '<button class="chk' + (s.done ? ' on' : '') + '" onclick="onCheck(' + i + ')">'
       + (s.done ? '✓' : '') + '</button>'
@@ -697,8 +686,17 @@ function renderSets() {
       + '<button class="del" onclick="onDel(' + i + ')">×</button>'
       + '</div>'
 
-      // 下段（メモ）
-      + '<div class="set-bot">'
+      // 2段目: 1RM・目標まで（showRMのときのみ表示）
+      + (showRM
+        ? '<div class="set-line2">'
+          + '<div class="res-badge"><span class="res-badge-label">推定1RM</span><span id="rm' + i + '"><span class="c-empty">—</span></span></div>'
+          + '<div class="res-badge"><span class="res-badge-label">目標まで</span><span id="diff' + i + '"><span class="c-empty">—</span></span></div>'
+          + '</div>'
+        : '<span id="rm' + i + '" style="display:none"></span><span id="diff' + i + '" style="display:none"></span>'
+      )
+
+      // 3段目: メモ
+      + '<div class="set-line3">'
       + '<input class="memo-inp" id="m' + i + '" type="text" placeholder="メモ（任意）"'
       + ' value="' + mVal + '"'
       + ' oninput="onMemo(' + i + ',this.value)">'
