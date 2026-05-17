@@ -400,6 +400,98 @@
   .t-ghost { background:#2c2c2e; border:1.5px solid #3a3a3c; color:#fff; }
   .t-main  { background:linear-gradient(135deg,#f5a623,#ff6b35); color:#fff; }
   .t-done  { text-align:center; font-size:0.74rem; color:#30d158; margin-top:8px; display:none; }
+
+  /* ===== 種目追加ボタン ===== */
+  .add-ex-btn {
+    background: #2c2c2e; border: 1.5px solid #3a3a3c; border-radius: 8px;
+    color: #f5a623; font-size: 1.3rem; font-weight: 400; width: 42px; height: 42px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.15s;
+  }
+  .add-ex-btn:active { background: #3a3a3c; }
+
+  /* ===== 種目管理モーダル（ボトムシート） ===== */
+  .ex-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    z-index: 500; display: none; align-items: flex-end; justify-content: center;
+  }
+  .ex-modal-overlay.open { display: flex; }
+
+  .ex-modal {
+    background: #1c1c1e; border-radius: 20px 20px 0 0;
+    width: 100%; max-height: 82dvh; overflow-y: auto;
+    padding: 0 16px 48px; animation: slideUp 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .ex-modal-handle {
+    width: 36px; height: 4px; border-radius: 2px; background: #3a3a3c;
+    margin: 10px auto 18px;
+  }
+
+  .ex-modal-title {
+    font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 16px; text-align: center;
+  }
+
+  .ex-modal-section {
+    font-size: 0.65rem; font-weight: 700; color: #8e8e93;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 14px 0 8px;
+  }
+
+  .custom-ex-row {
+    display: flex; align-items: center; gap: 10px;
+    background: #2c2c2e; border-radius: 10px; padding: 10px 12px; margin-bottom: 6px;
+  }
+  .custom-ex-row-name { flex: 1; font-size: 0.9rem; font-weight: 600; color: #fff; }
+  .custom-ex-row-meta { font-size: 0.7rem; color: #8e8e93; }
+  .custom-ex-del {
+    background: none; border: none; color: #ff453a; font-size: 1.1rem;
+    cursor: pointer; padding: 4px 6px; flex-shrink: 0;
+  }
+
+  .ex-no-custom { font-size: 0.82rem; color: #636366; text-align: center; padding: 10px 0; }
+
+  .ex-form { background: #2c2c2e; border-radius: 12px; padding: 14px; margin-top: 4px; }
+
+  .ex-form-row { margin-bottom: 12px; }
+  .ex-form-row:last-child { margin-bottom: 0; }
+  .ex-form-label { font-size: 0.72rem; color: #fff; font-weight: 600; margin-bottom: 5px; display: block; }
+
+  .ex-form-inp {
+    width: 100%; background: #1c1c1e; border: 1.5px solid #3a3a3c; border-radius: 8px;
+    color: #fff; font-size: 0.95rem; font-weight: 600;
+    padding: 9px 12px; outline: none; transition: border-color 0.15s;
+  }
+  .ex-form-inp:focus { border-color: #f5a623; }
+  .ex-form-inp::placeholder { color: #48484a; }
+
+  .ex-form-inp-num {
+    width: 100%; background: #1c1c1e; border: 1.5px solid #3a3a3c; border-radius: 8px;
+    color: #fff; font-size: 0.95rem; font-weight: 600;
+    padding: 9px 12px; outline: none; transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  .ex-form-inp-num::-webkit-inner-spin-button,
+  .ex-form-inp-num::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .ex-form-inp-num:focus { border-color: #f5a623; }
+  .ex-form-inp-num::placeholder { color: #48484a; }
+
+  .ex-radio-group { display: flex; gap: 8px; }
+  .ex-radio-opt {
+    flex: 1; padding: 9px 6px; background: #1c1c1e; border: 1.5px solid #3a3a3c;
+    border-radius: 8px; text-align: center; cursor: pointer;
+    font-size: 0.8rem; color: #aeaeb2; font-weight: 600; transition: all 0.15s;
+  }
+  .ex-radio-opt.sel { border-color: #f5a623; color: #f5a623; background: #2d1f00; }
+
+  .ex-add-submit {
+    width: 100%; padding: 13px; background: #f5a623; border: none; border-radius: 10px;
+    color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 14px;
+    transition: opacity 0.15s;
+  }
+  .ex-add-submit:active { opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -446,6 +538,7 @@
   <div class="log-body">
     <div class="toolbar">
       <select class="ex-select" id="exSelect" onchange="switchEx(this.value)"></select>
+      <button class="add-ex-btn" onclick="openExModal()" title="種目を追加・管理">＋</button>
       <div class="goal-edit">
         <label>目標</label>
         <input class="goal-inp" type="number" id="goalInp" min="1" max="1000" oninput="onGoalChange(this.value)">
@@ -499,6 +592,37 @@
   </div>
 </div>
 
+<!-- ===== 種目管理モーダル ===== -->
+<div class="ex-modal-overlay" id="exModalOverlay" onclick="onOverlayClick(event)">
+  <div class="ex-modal" id="exModal">
+    <div class="ex-modal-handle"></div>
+    <div class="ex-modal-title">種目を管理</div>
+
+    <div class="ex-modal-section">追加した種目</div>
+    <div id="customExList"></div>
+
+    <div class="ex-modal-section">新しい種目を追加</div>
+    <div class="ex-form">
+      <div class="ex-form-row">
+        <label class="ex-form-label">種目名</label>
+        <input class="ex-form-inp" id="newExName" type="text" placeholder="例：チェストプレス">
+      </div>
+      <div class="ex-form-row">
+        <label class="ex-form-label">目標重量 (kg)</label>
+        <input class="ex-form-inp-num" id="newExGoal" type="number" inputmode="decimal" placeholder="例：100">
+      </div>
+      <div class="ex-form-row">
+        <label class="ex-form-label">計算式</label>
+        <div class="ex-radio-group">
+          <div class="ex-radio-opt sel" id="optUpper" onclick="selectFormula('upper')">上半身<br><span style="font-size:0.65rem;font-weight:400">Epley ÷30</span></div>
+          <div class="ex-radio-opt" id="optLower" onclick="selectFormula('lower')">下半身<br><span style="font-size:0.65rem;font-weight:400">O'Connor ÷40</span></div>
+        </div>
+      </div>
+      <button class="ex-add-submit" onclick="submitNewEx()">追加する</button>
+    </div>
+  </div>
+</div>
+
 <!-- タイマー -->
 <div id="timer">
   <div class="t-head">
@@ -547,20 +671,24 @@ var EXERCISES = [
 ];
 
 // ===== 状態 =====
-var records      = {};
-var selectedDate = dateStr(new Date());
-var currentIdx   = 0;
+var records        = {};
+var customExercises = [];
+var selectedDate   = dateStr(new Date());
+var currentIdx     = 0;
 var calYear, calMonth;
 
 (function() {
   var t = new Date();
   calYear = t.getFullYear(); calMonth = t.getMonth();
   try { records = JSON.parse(localStorage.getItem('gym_v2') || '{}'); } catch(e) { records = {}; }
+  try { customExercises = JSON.parse(localStorage.getItem('gym_custom_ex') || '[]'); } catch(e) { customExercises = []; }
 })();
 
+function allEx() { return EXERCISES.concat(customExercises); }
 function dateStr(d) { return d.getFullYear() + '-' + p2(d.getMonth()+1) + '-' + p2(d.getDate()); }
 function p2(n) { return n < 10 ? '0' + n : '' + n; }
-function curEx() { return EXERCISES[currentIdx]; }
+function curEx() { return allEx()[currentIdx]; }
+function saveCustomEx() { try { localStorage.setItem('gym_custom_ex', JSON.stringify(customExercises)); } catch(e) {} }
 function dayLabel(ds) {
   var d = new Date(ds + 'T00:00:00');
   var days = ['日','月','火','水','木','金','土'];
@@ -669,7 +797,7 @@ function renderDaySummary() {
   var dateRec = records[selectedDate] || {};
   var rows = [], dayTotal = 0;
 
-  EXERCISES.forEach(function(ex) {
+  allEx().forEach(function(ex) {
     var sets = dateRec[ex.id];
     if (!sets) return;
     var valid = sets.filter(function(s) { return parseFloat(s.weight) > 0 && parseInt(s.reps) > 0; });
@@ -707,10 +835,13 @@ function renderLogHeader() {
 
 // ===== 種目 =====
 function renderExSelect() {
+  var list = allEx();
   var sel = document.getElementById('exSelect');
-  sel.innerHTML = EXERCISES.map(function(ex, i) {
-    return '<option value="' + i + '">' + ex.name + '</option>';
+  sel.innerHTML = list.map(function(ex, i) {
+    var label = ex.custom ? '★ ' + ex.name : ex.name;
+    return '<option value="' + i + '">' + label + '</option>';
   }).join('');
+  if (currentIdx >= list.length) currentIdx = 0;
   sel.value = currentIdx;
   document.getElementById('goalInp').value = curEx().goal;
 }
@@ -928,6 +1059,80 @@ function beep() {
       o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+0.25);
     });
   } catch(e){}
+}
+
+// ===== 種目管理モーダル =====
+var newExFormula = 'upper';
+
+function openExModal() {
+  renderCustomExList();
+  document.getElementById('newExName').value = '';
+  document.getElementById('newExGoal').value = '';
+  selectFormula('upper');
+  document.getElementById('exModalOverlay').classList.add('open');
+}
+
+function closeExModal() {
+  document.getElementById('exModalOverlay').classList.remove('open');
+}
+
+function onOverlayClick(e) {
+  if (e.target === document.getElementById('exModalOverlay')) closeExModal();
+}
+
+function selectFormula(type) {
+  newExFormula = type;
+  document.getElementById('optUpper').classList.toggle('sel', type === 'upper');
+  document.getElementById('optLower').classList.toggle('sel', type === 'lower');
+}
+
+function renderCustomExList() {
+  var el = document.getElementById('customExList');
+  if (!customExercises.length) {
+    el.innerHTML = '<div class="ex-no-custom">まだカスタム種目はありません</div>';
+    return;
+  }
+  el.innerHTML = customExercises.map(function(ex, i) {
+    var formula = ex.divisor === 30 ? '上半身(÷30)' : '下半身(÷40)';
+    return '<div class="custom-ex-row">'
+      + '<div>'
+      + '<div class="custom-ex-row-name">' + ex.name + '</div>'
+      + '<div class="custom-ex-row-meta">目標 ' + ex.goal + 'kg ／ ' + formula + '</div>'
+      + '</div>'
+      + '<button class="custom-ex-del" onclick="deleteCustomEx(' + i + ')">🗑</button>'
+      + '</div>';
+  }).join('');
+}
+
+function submitNewEx() {
+  var name = document.getElementById('newExName').value.trim();
+  var goal = parseFloat(toHalf(document.getElementById('newExGoal').value));
+  if (!name) { alert('種目名を入力してください'); return; }
+  if (!goal || goal <= 0) { alert('目標重量を入力してください'); return; }
+  var id = 'c' + Date.now();
+  customExercises.push({
+    id: id, name: name, goal: goal,
+    divisor: newExFormula === 'upper' ? 30 : 40,
+    showRM: false, custom: true
+  });
+  saveCustomEx();
+  renderCustomExList();
+  renderExSelect();
+  document.getElementById('newExName').value = '';
+  document.getElementById('newExGoal').value = '';
+}
+
+function deleteCustomEx(idx) {
+  var ex = customExercises[idx];
+  // 現在選択中の種目が削除される場合はリセット
+  var globalIdx = EXERCISES.length + idx;
+  if (currentIdx === globalIdx) currentIdx = 0;
+  else if (currentIdx > globalIdx) currentIdx--;
+  customExercises.splice(idx, 1);
+  saveCustomEx();
+  renderCustomExList();
+  renderExSelect();
+  renderSets();
 }
 
 // ===== 起動 =====
