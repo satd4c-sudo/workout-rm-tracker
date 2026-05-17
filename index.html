@@ -730,25 +730,16 @@ function onGoalChange(v) {
 function updateRow(idx) {
   var sets = getSets(), s = sets[idx];
   if (!s) return;
-  var rmEl   = document.getElementById('rm'   + idx);
-  var diffEl = document.getElementById('diff' + idx);
-  if (!rmEl || !diffEl) return;
+  var rmEl = document.getElementById('rm' + idx);
+  if (!rmEl) return;
 
-  if (!curEx().showRM) { rmEl.innerHTML = ''; diffEl.innerHTML = ''; updateStats(); return; }
+  if (!curEx().showRM) { rmEl.innerHTML = ''; updateStats(); return; }
 
   var v = calcORM(s.weight, s.reps, curEx().divisor);
   if (v === null) {
     rmEl.innerHTML = '<span class="c-empty">—</span>';
-    diffEl.innerHTML = '<span class="c-empty">—</span>';
   } else {
-    var gap = Math.round((curEx().goal - v) * 10) / 10;
     rmEl.innerHTML = '<span class="c-1rm">' + v + ' kg</span>';
-    if (gap <= 0) {
-      diffEl.innerHTML = '<span class="c-near">達成！🎉</span>';
-    } else {
-      var cls = gap <= 20 ? 'c-near' : gap <= 50 ? 'c-mid' : 'c-far';
-      diffEl.innerHTML = '<span class="' + cls + '">あと ' + gap + ' kg</span>';
-    }
   }
   updateStats();
 }
@@ -793,9 +784,8 @@ function renderSets() {
       + (showRM
         ? '<div class="set-line2">'
           + '<div class="res-badge"><span class="res-badge-label">推定1RM</span><span id="rm' + i + '"><span class="c-empty">—</span></span></div>'
-          + '<div class="res-badge"><span class="res-badge-label">目標まで</span><span id="diff' + i + '"><span class="c-empty">—</span></span></div>'
           + '</div>'
-        : '<span id="rm' + i + '" style="display:none"></span><span id="diff' + i + '" style="display:none"></span>')
+        : '<span id="rm' + i + '" style="display:none"></span>')
       + '<div class="set-line3"><input class="memo-inp" id="m' + i + '" type="text" placeholder="メモ（任意）" value="' + mVal + '" oninput="onMemo(' + i + ',this.value)"></div>'
       + '</div>';
   }).join('');
